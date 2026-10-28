@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public sealed class DocumentObjectInteraction : MonoBehaviour
 {
@@ -13,7 +11,6 @@ public sealed class DocumentObjectInteraction : MonoBehaviour
 
     Collider m_TargetCollider;
     DocumentViewer m_DocumentViewer;
-    XRSimpleInteractable m_Interactable;
 
     void Start()
     {
@@ -31,11 +28,6 @@ public sealed class DocumentObjectInteraction : MonoBehaviour
         if (m_TargetCollider == null)
             m_TargetCollider = AddBoundsCollider();
 
-        m_Interactable = GetComponent<XRSimpleInteractable>();
-        if (m_Interactable == null)
-            m_Interactable = gameObject.AddComponent<XRSimpleInteractable>();
-
-        m_Interactable.selectEntered.AddListener(OnSelected);
     }
 
     void Update()
@@ -63,12 +55,7 @@ public sealed class DocumentObjectInteraction : MonoBehaviour
         }
     }
 
-    void OnSelected(SelectEnterEventArgs args)
-    {
-        OpenDocument();
-    }
-
-    void OpenDocument()
+    public void OpenDocument()
     {
         if (m_DocumentViewer == null)
         {

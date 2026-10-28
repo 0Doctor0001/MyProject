@@ -1,8 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public sealed class SafeKeyInteraction : MonoBehaviour
 {
@@ -33,8 +31,6 @@ public sealed class SafeKeyInteraction : MonoBehaviour
     GameObject m_Safe;
     GameObject m_Key;
     GameObject m_SafeDocumentObject;
-    XRGrabInteractable m_KeyGrab;
-    XRSimpleInteractable m_DocumentInteractable;
     Rigidbody m_KeyBody;
     Collider m_KeyCollider;
     Collider m_SafeCollider;
@@ -43,7 +39,7 @@ public sealed class SafeKeyInteraction : MonoBehaviour
     DocumentViewer m_DocumentViewer;
     bool m_SafeColliderIsInteractionProxy;
     bool m_HasKey;
-    bool m_DesktopKeyHeld;
+    bool m_ControllerKeyHeld;
     bool m_IsOpen;
 
     void Start()
@@ -93,20 +89,12 @@ public sealed class SafeKeyInteraction : MonoBehaviour
             m_KeyBody = m_Key.AddComponent<Rigidbody>();
         m_KeyBody.isKinematic = true;
         m_KeyBody.useGravity = false;
-
-        m_KeyGrab = m_Key.GetComponent<XRGrabInteractable>();
-        if (m_KeyGrab == null)
-            m_KeyGrab = m_Key.AddComponent<XRGrabInteractable>();
-        m_KeyGrab.useDynamicAttach = true;
-        m_KeyGrab.throwOnDetach = false;
-        m_KeyGrab.selectEntered.AddListener(OnKeySelected);
-        m_KeyGrab.selectExited.AddListener(OnKeyReleased);
     }
 
     void Update()
     {
         if (m_Door != null && !m_IsOpen &&
-            (m_HasKey || (m_KeyGrab != null && m_KeyGrab.isSelected)) &&
+            m_HasKey &&
             IsKeyNearSafe())
         {
             m_HasKey = true;
@@ -172,9 +160,7 @@ public sealed class SafeKeyInteraction : MonoBehaviour
             return;
         }
 
-        m_DesktopKeyHeld = true;
         m_HasKey = true;
-        m_KeyGrab.enabled = false;
         m_KeyCollider.enabled = false;
         m_KeyBody.isKinematic = true;
         m_Key.transform.SetParent(hand, false);
@@ -185,16 +171,41 @@ public sealed class SafeKeyInteraction : MonoBehaviour
         Debug.Log("Safe key picked up.", this);
     }
 
-    void OnKeySelected(SelectEnterEventArgs args)
+    public bool TryPickUpKey(Collider target, Transform hand)
     {
+        if (m_Key == null || m_KeyCollider == null ||
+            m_ControllerKeyHeld || hand == null || !IsColliderOnObject(target, m_Key))
+        {
+            return false;
+        }
+
+        m_ControllerKeyHeld = true;
         m_HasKey = true;
-        Debug.Log("Safe key picked up.", this);
+        m_KeyCollider.enabled = false;
+        m_Key.transform.SetParent(hand, false);
+        m_Key.transform.localPosition = new Vector3(0f, 0f, 0.12f);
+        m_Key.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+        return true;
     }
 
-    void OnKeyReleased(SelectExitEventArgs args)
+    public void ReleaseControllerKey()
     {
-        if (!m_DesktopKeyHeld)
-            m_HasKey = m_KeyGrab.isSelected;
+        if (!m_ControllerKeyHeld)
+            return;
+
+        m_ControllerKeyHeld = false;
+        m_HasKey = false;
+        m_Key.transform.SetParent(null, true);
+        m_KeyCollider.enabled = true;
+    }
+
+    public bool TryOpenSafeDocument(Collider target)
+    {
+        if (!IsColliderOnObject(target, m_SafeDocumentObject))
+            return false;
+
+        OpenSafeDocument();
+        return true;
     }
 
     bool IsKeyNearSafe()
@@ -239,20 +250,14 @@ public sealed class SafeKeyInteraction : MonoBehaviour
         if (m_SafeDocumentObject.GetComponentInChildren<Collider>() == null)
             EnsureBoundsCollider(m_SafeDocumentObject, GetRenderBounds(m_SafeDocumentObject));
 
-        m_DocumentInteractable = m_SafeDocumentObject.GetComponent<XRSimpleInteractable>();
-        if (m_DocumentInteractable == null)
-            m_DocumentInteractable = m_SafeDocumentObject.AddComponent<XRSimpleInteractable>();
-        m_DocumentInteractable.selectEntered.AddListener(OnSafeDocumentSelected);
         Debug.Log($"Safe document interaction is ready on '{m_SafeDocumentObject.name}'.", this);
-    }
-
-    void OnSafeDocumentSelected(SelectEnterEventArgs args)
-    {
-        OpenSafeDocument();
     }
 
     void OpenSafeDocument()
     {
+        if (!m_IsOpen)
+            return;
+
         if (m_DocumentViewer == null)
         {
             Debug.LogError("DocumentViewer was not found. Cannot open the safe document.", this);
