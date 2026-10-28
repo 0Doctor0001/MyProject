@@ -1,0 +1,5 @@
+H:/Projects/UnityProject/StudyPlan/.utmp/RelWithDebInfo/66475b2j/arm64-v8a/CMakeFiles/edit_cache.dir
+H:/Projects/UnityProject/StudyPlan/.utmp/RelWithDebInfo/66475b2j/arm64-v8a/CMakeFiles/rebuild_cache.dir
+H:/Projects/UnityProject/StudyPlan/.utmp/RelWithDebInfo/66475b2j/arm64-v8a/GameActivity/CMakeFiles/game.dir
+H:/Projects/UnityProject/StudyPlan/.utmp/RelWithDebInfo/66475b2j/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+H:/Projects/UnityProject/StudyPlan/.utmp/RelWithDebInfo/66475b2j/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
